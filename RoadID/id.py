@@ -76,6 +76,6 @@ class RoadIdentifier:
 				self.MAT[i+1,j] = col
 				self.MAT[i+1,j+1] = col
 
-				self.marks.append(i,j)
+				self.marks.append((i,j))
 
 		
