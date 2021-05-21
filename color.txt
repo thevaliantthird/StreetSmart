@@ -1,0 +1,20 @@
+RED:
+First Co-ordinate: 0.9-1
+Second Co-ordinate : 0-0.2 
+Third: 0.2-0.3
+
+Green :
+First : 0-0.2
+Second : 0.85-0.92 
+Third : 0.32-0.39
+
+Organge : 
+First: 0.82-1
+Second : 0.4-0.6
+Third: : 0.18-0.33
+
+
+Brown :
+First : 0.65-0.75
+Second : 0-0.1
+Third :0.1
