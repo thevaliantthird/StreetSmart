@@ -60,20 +60,19 @@ Certain Screenshot apps like 'Screenshot' on Ubuntu have this feature to change 
 
 Dealing with parsed Roads (Utkarsh's Part):
 
-	1) You'll be getting a matrix(as a 2D Numpy Array) with same dimension as that of the Image itself.
-	2) Majority of the entries in this part will be zero. The non-zero entries will denote the traffic assoiated with the roads that are identified around that pixel.
-	3) The first task would be to convert the roads to be boundaries as for all we care, that's all that matters.
-	4) These roads as well as the Image Boundary would together compartmentalize the map into various parts
-	5) Your next task would be to create a new class which has as its attributes, an image and the nearest boundary (Basically take all boundaries which are within a given threshold,
-	and only take the first such boundary(s) and store them in the class)
-
+1) You'll be getting a matrix(as a 2D Numpy Array) with same dimension as that of the Image itself.
+2) Majority of the entries in this part will be zero. The non-zero entries will denote the traffic assoiated with the roads that are identified around that pixel.
+3) The first task would be to convert the roads to be boundaries as for all we care, that's all that matters.
+4) These roads as well as the Image Boundary would together compartmentalize the map into various parts
+5) Your next task would be to create a new class which has as its attributes, an image and the nearest boundary (Basically take all boundaries which are within a given threshold,
+and only take the first such boundary(s) and store them in the class)
 
 
 Parsing Images to get the roads :
-	1) Figure out the 4-dimensional vector corresponding to all of our well known colors and tablate your range
-	2) Move through the Image and mark all such points on a second 2D Matrix
-	3) Figure out the Proper Algorithm to judge if a particular section of pixels together demarcate a road 
-	4) Running DFS/BFS and removing the vague sections which aren't exactly roads, but just some random points on the map which happen to have the same color which Google Maps 
-	reserves for Roads
-	5) Getting the road data into a different Data Abstraction 
+1) Figure out the 4-dimensional vector corresponding to all of our well known colors and tablate your range
+2) Move through the Image and mark all such points on a second 2D Matrix
+3) Figure out the Proper Algorithm to judge if a particular section of pixels together demarcate a road 
+4) Running DFS/BFS and removing the vague sections which aren't exactly roads, but just some random points on the map which happen to have the same color which Google Maps 
+reserves for Roads
+5) Getting the road data into a different Data Abstraction 
 
