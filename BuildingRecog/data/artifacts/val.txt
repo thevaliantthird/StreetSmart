@@ -1,0 +1,2 @@
+data/artifacts//images/19.png
+data/artifacts//images/20.png
