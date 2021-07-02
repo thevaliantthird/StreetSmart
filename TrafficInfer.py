@@ -1,4 +1,60 @@
-import numpy as np 
+import numpy as np
+
+class Building:
+    def __init__(self, vec):
+        self.vec = vec
+
+class RoadPix:
+    def __init__(self, _coordinate, _Traffic):
+        self.coordinate = _coordinate
+        self.Traffic = _Traffic
+        self.buildlist = {}
+        self.Z = 0
+
+class DataSet:
+    def __init__(self, inp, out):
+        self.InputVec = inp
+        self.Output = out
+
+
+
+class Controller:
+    def __init__(self, buildlist, roadlist):
+        self.BuildingList = buildlist
+        self.RoadPixels = roadlist
+        self.DataList = []
+        self.CreateDataset()
+
+    def RoadIter(self, road, n):
+        i = 0
+        road.Z = 0
+        while i<n:
+            distance = ((self.BuildingList[i].vec[0] - road.coordinate.x)**2 + (self.BuildingList[i].vec[1] - road.coordinate.y)**2)**0.5
+            road.Z += distance
+            road.buildlist[i] = distance
+            i += 1
+        j = 0
+        while j<n:
+            road.buildlist[j] = float(road.buildlist[j])/road.Z
+        return road
+
+    def CreateDataset(self) :
+        buildnum = [ 1 for i in range(0,len(self.BuildingList)) ]
+        buildtraff = [ (0*i) for i in range(0,len(self.BuildingList)) ]
+
+        for x in self.RoadPixels:
+            x = RoadIter(x,len(self.BuildingList))
+            for key in range(0,len(self.BuildingList)):
+                buildtraff[key]+=(x.buildlist[key])*x.Traffic
+                buildnum[key]+=1
+        i = 0
+        for x in self.BuildingList:
+            self.DataList.append(DataSet(x.vec[2:],buildtraff[i]/buildnum[i]))
+            i+=1
+
+    def GetDataSet(self):
+        return self.DataList
+
 
 def relu(x):
 
@@ -6,7 +62,7 @@ def relu(x):
 
 		return x , x
 
-	else: 
+	else:
 		return 0 , x
 
 def relu_backward(dA, activation_cache):
@@ -17,10 +73,10 @@ def relu_backward(dA, activation_cache):
 
 	else:
 
-		return dA 
+		return dA
 
 
-class Neural Network:
+class Neural_Network:
 
 	def __init__(self, inputarr, outputarr, layer_dims):
 
@@ -62,16 +118,16 @@ class Neural Network:
 			A_prev = A
 			W, b = self.parameters['W'+str(l)], self.parameters['b'+str(l)]
 			A, cache = linear_activation_forward(A_prev, W, b)
-			self.caches.append(cache) 
+			self.caches.append(cache)
 
 		self.AL = A #output layer
 
-	def compute_cost(self): 
+	def compute_cost(self):
 
 		m = self.Y.shape[1]
 
 		#assert (self.AL.shape()==self.Y.shape())
-		
+
 		cost = np.sum(np.power(self.AL-self.Y , 2)) / (2*m)
 
 		cost = np.squeeze(cost)
@@ -121,6 +177,7 @@ class Neural Network:
 			self.grads["dW" + str(l + 1)] = dW_temp
 			self.grads["db" + str(l + 1)] = db_temp
 
+
 	def gradient_descent(self, learning_rate, num_iterations):
 
 		for _ in range(num_iterations):
@@ -129,4 +186,3 @@ class Neural Network:
 
 				self.parameters["W" + str(l)] -= learning_rate * self.grads["dw" + str(l)]
 				self.parameters["b" + str(l)] -= learning_rate * self.grads["db" + str(l)]
-
