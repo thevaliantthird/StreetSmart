@@ -15,8 +15,8 @@ config_path='config/yolov3.cfg'
 weights_path='checkpoints/4.weights'
 class_path='config/coco.names'
 img_size=416
-conf_thres=0.9
-nms_thres=0.5
+conf_thres=0.95
+nms_thres=0.75
 # Load model and weights
 model = Darknet(config_path, img_size=img_size)
 model.load_weights(weights_path)

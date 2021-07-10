@@ -1,16 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#
-# def PrintImage(Img):
-#     X = np.zeros((Img.shape[0],Img.shape[1],4))
-#     for i in range(0,Img.shape[0]):
-#         for j in range(0,Img.shape[1]):
-#             X[i,j,0] = float(Img[i,j])/240.0
-#             X[i,j,1] = float(Img[i,j])/240.0
-#             X[i,j,2] = float(Img[i,j])/240.0
-#             X[i,j,3] = 1.0
-#     plt.imsave('test.png',X)
+
+def PrintImage(Img,s):
+    X = np.zeros((Img.shape[0],Img.shape[1],4))
+    for i in range(0,Img.shape[0]):
+        for j in range(0,Img.shape[1]):
+            X[i,j,0] = float(Img[i,j])/240.0
+            X[i,j,1] = float(Img[i,j])/240.0
+            X[i,j,2] = float(Img[i,j])/240.0
+            X[i,j,3] = 1.0
+    plt.imsave(s+'.png',X)
 
 
 
@@ -22,8 +22,7 @@ class RoadIdentifier:
 		self.MAT = np.zeros((self.ImageDIM[0],self.ImageDIM[1]))
 		self.marks = []
 		self.process()
-		print('Phase 1 of Road Identification Completed!')
-		self.DFS()
+
 
 
 	def IfRoad(self,xs,ys):
@@ -67,39 +66,39 @@ class RoadIdentifier:
 		res = list(res)
 		if(res.count(10)>=2):
 
-			return 10 #green
+			return 10.0 #green
 
 		elif(res.count(40)>=2):
 
-			return 40 #orange
+			return 40.0 #orange
 
 		elif(res.count(80)>=2):
 
-			return 80 #red
+			return 80.0 #red
 
 		elif(res.count(120)>=2):
 
-			return 120 #brown
+			return 120.0 #brown
 
 		else:
 
-			return 0 #no route
+			return 0.0 #no route
 
 
 
 
 	def process(self):
 
-		for i in range(0,np.shape(self.IMG)[0]):
+		for i in range(0,np.shape(self.IMG)[0],2):
 			if i==self.IMG.shape[0]-1:
 				break
-			for j in range(0,np.shape(self.IMG)[1]):
+			for j in range(0,np.shape(self.IMG)[1],2):
 				if j==self.IMG.shape[1]-1:
 					break
 				col = self.IfRoad(i,j)
 				self.MAT[i,j] = col
 				if col > 5:
-					self.marks.append((i,j))
+					self.marks.append(((i,j),col))
 
 	def DFS(self):
 
@@ -137,27 +136,11 @@ class RoadIdentifier:
 					cat.append(y)
 					if ((y[0]+1,y[1]) in visit.keys()) and (visit[(y[0]+1,y[1])] != 0) :
 						todo.append((y[0]+1,y[1]))
-					if ((y[0],y[1]+1) in visit.keys()) and (visit[(y[0],y[1]+1)] != 0) :
-						todo.append((y[0],y[1]+1))
-					if ((y[0]-1,y[1]) in visit.keys()) and (visit[(y[0]-1,y[1])] != 0) :
-						todo.append((y[0]-1,y[1]))
-					if ((y[0],y[1]-1) in visit.keys()) and (visit[(y[0],y[1]-1)] != 0) :
-						todo.append((y[0],y[1]-1))
-					if ((y[0]+1,y[1]+1) in visit.keys()) and (visit[(y[0]+1,y[1]+1)] != 0) :
-						todo.append((y[0]+1,y[1]+1))
-					if ((y[0]+1,y[1]-1) in visit.keys()) and (visit[(y[0]+1,y[1]-1)] != 0) :
-						todo.append((y[0]+1,y[1]-1))
-					if ((y[0]-1,y[1]) in visit.keys()) and (visit[(y[0]-1,y[1])] != 0) :
-						todo.append((y[0]-1,y[1]))
-					if ((y[0]-1,y[1]+1) in visit.keys()) and (visit[(y[0]-1,y[1]+1)] != 0) :
-						todo.append((y[0]-1,y[1]+1))
-				else:
-					if (maxx < self.ImageDIM[0]-20) and  (maxy < self.ImageDIM[1]-20) and (minx >  20) and (miny >20) :
-						for x in cat :
-							self.MAT[x] = 0
 
-	def GetImageMAT(self):
-		return self.MAT
+
+	def GetRoadPixel(self):
+		return self.marks
+
 
 
 class Collection:
@@ -193,7 +176,7 @@ class RoadParsing:
 
 		self.list_col = []
 		self.image = image
-		self.bool_pxls = (image == 0).astype(int)
+		self.bool_pxls = (image < 5).astype(int)
 		self.visited = np.zeros(self.bool_pxls.shape)
 		self.boundary = []
 		self.process()
@@ -207,10 +190,10 @@ class RoadParsing:
 		for i in range(self.bool_pxls.shape[0]):
 			for j in range(self.bool_pxls.shape[1]):
 				if(self.bool_pxls[i,j] == 1) and self.visited[i,j]==0:
-					self.boundary = []
+					self.boundary = set()
 					self.DFS((i,j))
 					#print("boundary: ", self.boundary)
-					self.list_col.append(Collection(self.boundary,label,self.bool_pxls.shape[0],self.bool_pxls.shape[1]))
+					self.list_col.append(Collection(list(self.boundary),label,self.bool_pxls.shape[0],self.bool_pxls.shape[1]))
 					label+=1
 
 
@@ -219,9 +202,9 @@ class RoadParsing:
 		todo.append(node)
 		while len(todo)!=0:
 			x = todo.pop()
-			if self.isboundary(x):
-				self.boundary.append(x)
-			if self.visited[x[0],x[1]]==0:
+			if self.isboundaryA(x) or self.isboundaryB(x):
+				self.boundary.add(x)
+			if self.isboundaryB(x)==False and self.visited[x[0],x[1]]==0:
 				self.visited[x[0],x[1]] = 1
 				if (x[0] != (self.bool_pxls.shape[0]-1)) and (self.bool_pxls[x[0]+1,x[1]] == 1) :
 					todo.append((x[0]+1, x[1]))
@@ -232,8 +215,9 @@ class RoadParsing:
 				if x[1] != 0 and (self.bool_pxls[x[0],x[1]-1] == 1):
 					todo.append((x[0], x[1]-1))
 
-	def isboundary(self,node):
+	def isboundaryA(self,node):
 		if node[0] <= 0 or node[0] >= (self.bool_pxls.shape[0]-1) or node[1] <= 0 or node[1] >= (self.bool_pxls.shape[1]-1) : return True
-		if self.bool_pxls[node[0]+1,node[1]] == 0 or self.bool_pxls[node[0],node[1]+1] == 0 or self.bool_pxls[node[0]-1,node[1]]== 0 or self.bool_pxls[node[0], node[1]-1] == 0 : return True
-		if self.bool_pxls[node[0]+1,node[1]+1] == 0  or self.bool_pxls[node[0]+1,node[1]-1] == 0  or self.bool_pxls[node[0]-1,node[1]+1] == 0 or self.bool_pxls[node[0]-1, node[1]-1] == 0 : return True
+		return False
+	def isboundaryB(self,node):
+		if self.bool_pxls[node[0],node[1]]==0: return True
 		return False

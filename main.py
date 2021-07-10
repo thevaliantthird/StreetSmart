@@ -18,25 +18,18 @@ for i in range(x,y+1):
     Img = plt.imread('images/'+str(i)+'.png')
     X = RoadID.RoadIdentifier(Img)
     print('Roads Identified!')
-    Y = X.GetImageMAT()
-    X = RoadID.RoadParsing(Y)
-    print('Roads Parsed!')
-    X = X.GetListCol()
-    print('Boundaries and Sections Identified! A total of ', len(X),' such structures were Identified!')
-    i = 0
-    for y in X:
-        print('Starting Processing for the ',i,'th Cluster.')
-        J = y.GetBoundary()
-        J1 = []
-        for t in J:
-            if Y[t[0],t[1]] != 0:
-                J1.append(RoadPix(t,Y[t[0],t[1]]))
-        R = y.GetRectBoundary()
-        if (R[1]-R[0]) >= 2 and (R[3]-R[2])>=2 :
-            det = predict.GetPredictions(Img[R[0]:R[1],R[2]:R[3],0:3])
-            BL = [TrafficInfer.Building(det[i,:]) for i in range(0,det.shape[0])]
-            L+=TrafficInfer.Controller(BL,J1).GetDataSet()
-        i+=1
+    Y = X.GetRoadPixel()
+    R = [TrafficInfer.RoadPix(x[0],x[1]) for x in Y]
+    #print('Reached here!')
+
+    det = predict.GetPredictions(Img[:,:,0:3])
+    #print('Reached here!')
+    B = [TrafficInfer.Building(det[i,:]) for i in range(det.shape[0])]
+    #print('Reached here!')
+    L+=TrafficInfer.Controller(B,R).GetDataSet()
+
+
+
     print('Completed Everything for this image!')
     print(len(L))
 

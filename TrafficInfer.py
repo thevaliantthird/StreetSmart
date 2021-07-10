@@ -29,27 +29,33 @@ class Controller:
         i = 0
         road.Z = 0
         while i<n:
-            distance = ((self.BuildingList[i].vec[0] - road.coordinate.x)**2 + (self.BuildingList[i].vec[1] - road.coordinate.y)**2)**0.5
+            distance = ((self.BuildingList[i].vec[0] - road.coordinate[0])**2 + (self.BuildingList[i].vec[1] - road.coordinate[1])**2)**0.5
             road.Z += distance
             road.buildlist[i] = distance
             i += 1
         j = 0
         while j<n:
             road.buildlist[j] = float(road.buildlist[j])/road.Z
+            j+=1
         return road
 
     def CreateDataset(self) :
         buildnum = [ 1 for i in range(0,len(self.BuildingList)) ]
         buildtraff = [ (0*i) for i in range(0,len(self.BuildingList)) ]
+        Z = float(len(self.RoadPixels)*len(self.BuildingList))
+        i = 0
 
+        print(len(self.RoadPixels),len(self.BuildingList),Z)
         for x in self.RoadPixels:
-            x = RoadIter(x,len(self.BuildingList))
+            x = self.RoadIter(x,len(self.BuildingList))
             for key in range(0,len(self.BuildingList)):
                 buildtraff[key]+=(x.buildlist[key])*x.Traffic
                 buildnum[key]+=1
+                i+=1
+                #print(i)
         i = 0
         for x in self.BuildingList:
-            self.DataList.append(DataSet(x.vec[2:],buildtraff[i]/buildnum[i]))
+            self.DataList.append(DataSet(x.vec,buildtraff[i]/buildnum[i]))
             i+=1
 
     def GetDataSet(self):
