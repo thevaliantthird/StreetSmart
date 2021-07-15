@@ -6,6 +6,10 @@ from PIL import Image, ImageTk
 import os
 import glob
 import random
+import pickle
+import Infer
+import NN
+import numpy as np
 
 # colors for the bboxes
 COLORS = ['red', 'blue', 'yellow', 'pink', 'cyan', 'green', 'black']
@@ -117,7 +121,7 @@ class LabelTool():
 
         # popup menu
         self.popup_menu = Menu(self.mainPanel,tearoff = 0)
-        
+
         self.popup_menu.add_command(label = 'NOTA', command = self.appendNOTA )
         self.popup_menu.add_command(label = 'BusinessAndMarketingComplexes', command = self.appendBMC)
         self.popup_menu.add_command(label = 'Residential', command = self.appendResidential)
@@ -126,6 +130,7 @@ class LabelTool():
         self.popup_menu.add_command(label = 'Healthcare', command = self.appendHealth)
         self.popup_menu.add_command(label = 'Educational', command = self.appendEducational)
         self.popup_menu.add_command(label = 'GodownsAndStorage', command = self.appendGS)
+        self.popup_menu.add_command(label = 'Transport', command = self.appendT)
         self.popup_menu.add_command(label = 'HotelsAndLeisure', command = self.appendHL)
 
     def loadDir(self, dbg = False):
@@ -144,7 +149,7 @@ class LabelTool():
 
         # set up output dir
         self.outDir = os.path.join(self.imageDir, 'output')
-        if not os.path.exists(self.outDir): 
+        if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
 
         filelist = glob.glob(os.path.join(self.imageDir, '*.jpg'))
@@ -173,7 +178,7 @@ class LabelTool():
         self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
         self.progLabel.config(text = "%04d/%04d" %(self.cur, self.total))
         imgw = self.img.size[0]
-        imgh = self.img.size[1]        
+        imgh = self.img.size[1]
 
         # load labels
         self.clearBBox()
@@ -295,7 +300,39 @@ class LabelTool():
             self.loadImage()
 
     def getOutput(self):
-        pass
+        L = []
+        dct = {}
+        dct['NOTA'] = [1,0,0,0,0,0,0,0,0,0]
+        dct['BusinessAndMarketingComplexes'] = [0,1,0,0,0,0,0,0,0,0]
+        dct['Residential'] = [0,0,1,0,0,0,0,0,0,0]
+        dct['Offices'] = [0,0,0,1,0,0,0,0,0,0]
+        dct['PowerPlants_Factories_ConstructionSites'] = [0,0,0,0,1,0,0,0,0,0]
+        dct['Healthcare'] = [0,0,0,0,0,1,0,0,0,0]
+        dct['Educational'] = [0,0,0,0,0,0,1,0,0,0]
+        dct['GodownsAndStorage'] = [0,0,0,0,0,0,0,1,0,0]
+        dct['Transport'] = [0,0,0,0,0,0,0,0,1,0]
+        dct['HotelsAndLeisure'] = [0,0,0,0,0,0,0,0,0,1]
+        with open('param.soc','rb') as f:
+            Para = pickle.load(f)
+        for i in range(len(self.bboxList)):
+            box = self.bboxList[i]
+            x = (box[0] + box[2]) / 2
+            y = (box[1] + box[3]) / 2
+            w = (box[2] - box[0])
+            h = (box[3] - box[1])
+            traffic, cac = NN.L_model_forward(np.expand_dims(np.array([w,h]+dct[self.typeList[i]]),axis = 0),Para)
+            L.append(Infer.Rect((x,y),(w,h),float(traffic)*1000))
+        Res = Infer.Infer(L,self.img.size)
+        # TH = Res.TrafficMapH
+        # TV = Res.TrafficMapV
+        # T = Res.TrafficMap
+        # with open('TrafficH.npy','rb') as f:
+        #     np.save(f,TH)
+        # with open('TrafficV.npy','rb') as f:
+        #     np.save(f,TV)
+        # with open('Traffic.npy','rb') as f:
+        #     np.save(f,T)
+
 
     def appendNOTA(self):
         self.typeList.append('NOTA')
@@ -311,6 +348,9 @@ class LabelTool():
 
     def appendPFC(self):
         self.typeList.append('PowerPlants_Factories_ConstructionSites')
+
+    def appendT(self):
+        self.typeList.append('Transport')
 
     def appendHL(self):
         self.typeList.append('HotelsAndLeisure')

@@ -63,7 +63,6 @@ def linear_activation_forward(A_prev, W, b, activation):
         Z, linear_cache = linear_forward(A_prev,W,b)
         A, activation_cache = linear(Z)
 
-    assert (A.shape == (A.shape[0], W.shape[1]))
     cache = (linear_cache, activation_cache)
 
     return A, cache
@@ -86,8 +85,6 @@ def L_model_forward(X, parameters):
     caches.append(cache)
 
 
-
-    assert(AL.shape == (X.shape[0],1))
 
     return AL, caches
 
@@ -252,39 +249,7 @@ def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.001,
 
         return parameters, v, s
 
-with open('XFinal.npy','rb') as f:
-    X = np.load(f)
 
-with open('YFinal.npy','rb') as f:
-    Y = np.load(f)
-
-m = X.shape[0]
-layerDim = [X.shape[1],256,256,1]
-Parameters = initialize_parameters_deep(layerDim)
-V,S = initialize_adam(Parameters)
-
-iter = 10001
-
-
-Y = np.expand_dims(Y,axis = 1)
-
-min  = 1000000
-for i in range(1,iter+1):
-
-    al, cac = L_model_forward(X,Parameters)
-    #print('Done')
-    Grad = L_model_backward(al,Y,cac)
-    #print('Done')
-    Parameters,V,S = update_parameters_with_adam(Parameters,Grad,V,S,i)
-    cal = compute_cost(al,Y)
-    #print('Done')
-    if cal < min:
-        min = cal
-        with open('param.soc','wb') as f:
-            pickle.dump(Parameters,f)
-    print('After the ',i,'th iteration, We have loss = ',cal)
-
-print("The minimum loss reached was ", m.sqrt(min))
 #
 # with open('param.soc','wb') as f:
 #     pickle.dump(Parameters,f)
