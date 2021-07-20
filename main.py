@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # colors for the bboxes
-COLORS = ['red', 'blue', 'yellow', 'pink', 'cyan', 'green', 'black']
+COLORS = ['cyan']
 # image sizes for the examples
 SIZE = 256, 256
 
