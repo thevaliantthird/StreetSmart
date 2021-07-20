@@ -403,11 +403,11 @@ class LabelTool():
         # print(len(WH))
         # print(len(WV))
         for w in WH:
-            for i in range(0,X.shape[0],40):
+            for i in range(0,X.shape[0],35):
                 if np.mean(X[i,w[0],0:3]) < 0.1 and (i+20)<X.shape[0] and np.mean(X[i+20,w[0],0:3]) < 0.1:
                     X[i:(i+20),w[0]:w[1],0:3] = 1.00
         for w in WV:
-            for i in range(0,X.shape[1],40):
+            for i in range(0,X.shape[1],35):
                 if np.mean(X[w[0],i,0:3]) < 0.1 and (i+20)<X.shape[1] and np.mean(X[w[0],i+20,0:3]) < 0.1:
                     X[w[0]:w[1],i:(i+20),0:3] = 1.00
 
@@ -445,10 +445,10 @@ class LabelTool():
         TV = Res.TrafficMapV
         self.saveImage()
         self.imageList = []
-        for i in range(5,11):
+        for i in range(1,11):
             y = 1.00+(i/10)
             z = 'results/RoadPred'+str(i-4)
-            self.Visualise(TH,TV,y,z)
+            self.Visualise(TV,TH,y,z)
         
 
         self.imageList = sorted(self.imageList)

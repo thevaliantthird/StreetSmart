@@ -1,0 +1,2 @@
+0 0.306522 0.264228 0.176087 0.226016 PowerPlants_Factories_ConstructionSites
+1 0.734239 0.557724 0.233696 0.130081 PowerPlants_Factories_ConstructionSites
