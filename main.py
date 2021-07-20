@@ -1,4 +1,3 @@
-# https://github.com/puzzledqs/BBox-Label-Tool
 from __future__ import division
 from tkinter import *
 import tkinter.messagebox
@@ -30,6 +29,7 @@ class LabelTool():
         # initialize global state
         self.imageDir = ''
         self.imageList= []
+        self.outputDisplayed = False
         self.egDir = ''
         self.egList = []
         self.outDir = ''
@@ -153,6 +153,7 @@ class LabelTool():
         if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
 
+        self.outputDisplayed = False
         filelist = glob.glob(os.path.join(self.imageDir, '*.jpg'))
         self.tmp = []
         self.egList = []
@@ -186,6 +187,7 @@ class LabelTool():
         self.imagename = os.path.split(imagepath)[-1].split('.')[0]
         labelname = self.imagename + '.txt'
         self.labelfilename = os.path.join(self.outDir, labelname)
+        # print(self.labelfilename)
         bbox_cnt = 0
         if os.path.exists(self.labelfilename):
             with open(self.labelfilename) as f:
@@ -208,8 +210,55 @@ class LabelTool():
                     self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(tmp[0], tmp[1], tmp[2], tmp[3]))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
+    def loadOutputImage(self):
+
+        self.outputDisplayed = True
+        filelist = glob.glob(os.path.join('results/', '*.jpg'))
+        # print(filelist)
+        self.tmp = []
+        self.egList = []
+        # random.shuffle(filelist)
+        for (i, f) in enumerate(filelist):
+            if i == 3:
+                break
+            im = Image.open(f)
+            r = min(SIZE[0] / im.size[0], SIZE[1] / im.size[1])
+            new_size = int(r * im.size[0]), int(r * im.size[1])
+            self.tmp.append(im.resize(new_size, Image.ANTIALIAS))
+            self.egList.append(ImageTk.PhotoImage(self.tmp[-1]))
+            self.egLabels[i].config(image = self.egList[-1], width = SIZE[0], height = SIZE[1])
+
+        imagepath = self.imageList[self.cur - 1]
+        self.img = Image.open(imagepath)
+        self.tkimg = ImageTk.PhotoImage(self.img)
+        self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
+        self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
+        self.progLabel.config(text = "%04d/%04d" %(self.cur, self.total))
+        imgw = self.img.size[0]
+        imgh = self.img.size[1]
+
+        # load labels
+        bbox_cnt = 0
+        if os.path.exists(self.labelfilename):
+            with open(self.labelfilename) as f:
+                content = f.readlines()
+                lines = [x.strip() for x in content]
+                for i in lines:
+                    line = [w for w in i.split()]
+                    x1 = (float(line[1]) - float(line[3])/2) * imgw
+                    y1 = (float(line[2]) - float(line[4])/2) * imgh
+                    x2 = (float(line[1]) + float(line[3])/2) * imgw
+                    y2 = (float(line[2]) + float(line[4])/2) * imgh
+                    tmp = (x1,y1,x2,y2)
+                    tmpId = self.mainPanel.create_rectangle(tmp[0], tmp[1], \
+                                                            tmp[2], tmp[3], \
+                                                            width = 2, \
+                                                            outline = COLORS[(len(self.bboxList)-1) % len(COLORS)])
+
+
     def saveImage(self):
         with open(self.labelfilename, 'w') as f:
+            # print(self.labelfilename, "label name")
             for i in range(len(self.bboxList)):
                 box = self.bboxList[i]
                 imgw = self.img.size[0]
@@ -282,16 +331,18 @@ class LabelTool():
         self.typeList = []
 
     def prevImage(self, event = None):
-        self.saveImage()
+        if not self.outputDisplayed: self.saveImage()
         if self.cur > 1:
             self.cur -= 1
-            self.loadImage()
+            if not self.outputDisplayed: self.loadImage()
+            else: self.loadOutputImage() 
 
     def nextImage(self, event = None):
-        self.saveImage()
+        if not self.outputDisplayed: self.saveImage()
         if self.cur < self.total:
             self.cur += 1
-            self.loadImage()
+            if not self.outputDisplayed: self.loadImage()
+            else: self.loadOutputImage()
 
     def gotoImage(self):
         idx = int(self.idxEntry.get())
@@ -349,8 +400,8 @@ class LabelTool():
         T = np.where(data1+data2 > 0.5)
         for i in range(len(T[0])):
             X[T[0][i],T[1][i],0:3] = 0
-        print(len(WH))
-        print(len(WV))
+        # print(len(WH))
+        # print(len(WV))
         for w in WH:
             for i in range(0,X.shape[0],40):
                 if np.mean(X[i,w[0],0:3]) < 0.1 and (i+20)<X.shape[0] and np.mean(X[i+20,w[0],0:3]) < 0.1:
@@ -360,9 +411,12 @@ class LabelTool():
                 if np.mean(X[w[0],i,0:3]) < 0.1 and (i+20)<X.shape[1] and np.mean(X[w[0],i+20,0:3]) < 0.1:
                     X[w[0]:w[1],i:(i+20),0:3] = 1.00
 
-        plt.imsave(str+'.png',np.transpose(X,(1,0,2)))
+        plt.imsave(str+'.jpg',np.transpose(X,(1,0,2)))
+        self.imageList.append(str+'.jpg')
+
 
     def getOutput(self):
+
         L = []
 
         dct = {}
@@ -389,10 +443,21 @@ class LabelTool():
         Res = Infer.Infer(L,self.img.size)
         TH = Res.TrafficMapH
         TV = Res.TrafficMapV
+        self.saveImage()
+        self.imageList = []
         for i in range(5,11):
             y = 1.00+(i/10)
             z = 'results/RoadPred'+str(i-4)
             self.Visualise(TH,TV,y,z)
+        
+
+        self.imageList = sorted(self.imageList)
+
+        # default to the 1st image in the collection
+        self.cur = 1
+        self.total = len(self.imageList)
+
+        self.loadOutputImage()
         # T = Res.TrafficMap
         # with open('TrafficH.npy','rb') as f:
         #     np.save(f,TH)
